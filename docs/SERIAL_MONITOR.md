@@ -27,7 +27,7 @@ Use the **same environment** for build, flash, and monitor. SuperMini boards nee
 | SuperMini (typical) | `device monitor -e esp32c3-cdc --port COM6` |
 | CH340 / UART only | `device monitor -e esp32c3 --port COM6` |
 
-See [CHEATSHEET.md](CHEATSHEET.md) for the full comparison.
+See [BUILD_AND_FLASH.md](BUILD_AND_FLASH.md) for the full `esp32c3` vs `esp32c3-cdc` comparison.
 
 ---
 
