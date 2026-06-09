@@ -266,7 +266,7 @@ Saved **PWM Inverted** configs on GPIO 8 are auto-migrated to **Addressable GRB*
 | `espresense/rooms/<room>/led_1/set` | Command alias (internal id) |
 | `homeassistant/light/espresense_<id>/onboard_led/config` | HA discovery |
 
-Toggle the light in HA to turn the RGB LED on/off (default color blue). Brightness and color are supported via the light entity.
+Toggle the light in HA to turn the RGB LED on/off (default color blue). Brightness and color are supported via the light entity. On/off state is saved to flash and restored after power cycle.
 
 **SuperMini Plus (red PCB):** red power LED (always on), blue LED and WS2812 RGB both on GPIO 8. Firmware drives the WS2812 via **Addressable GRB**; HA **Onboard LED** controls the shared RGB output (default color blue). Do not use PWM on GPIO 8 — it corrupts the WS2812.
 

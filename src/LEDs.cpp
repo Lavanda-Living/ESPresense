@@ -35,8 +35,10 @@ static void migrateC3OnboardLed(int& type, int pin, int& cnt, ControlType cntrl)
 
 static void initC3OnboardLed(int type, int pin, ControlType cntrl, const String& savedState, LED* led) {
     if (pin < 0 || cntrl != Control_Type_MQTT || led == nullptr) return;
-    if (savedState.length() != 10) led->setState(false);
-    if (type >= 2) led->setColor(0, 0, 255);
+    if (savedState.length() != 12 && savedState.length() != 10) {
+        led->setState(false);
+        if (type >= 2) led->setColor(0, 0, 255);
+    }
 }
 #endif
 
@@ -276,7 +278,10 @@ bool Command(String& command, String& pay) {
     if (root.containsKey("state"))
         sendNewState = sendNewState || bulb->setState(root["state"] == MQTT_STATE_ON_PAYLOAD);
 
-    if (sendNewState) sendState(bulb);
+    if (sendNewState) {
+        sendState(bulb);
+        Save();
+    }
     return true;
 }
 

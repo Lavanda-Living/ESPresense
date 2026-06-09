@@ -167,9 +167,10 @@ const String LED::getStateFilename() {
 }
 
 const String LED::getStateString() {
-    // Format: BBRGGBBWW (B=brightness, R=red, G=green, B=blue, W=white)
-    char stateStr[11];
-    sprintf(stateStr, "%02X%02X%02X%02X%02X",
+    // Format: SSBBRGGBBWW (SS=on/off 00/01, then brightness and RGBW)
+    char stateStr[13];
+    sprintf(stateStr, "%02X%02X%02X%02X%02X%02X",
+            state ? 1 : 0,
             brightness,
             color.red,
             color.green,
@@ -179,20 +180,32 @@ const String LED::getStateString() {
 }
 
 void LED::setStateString(const String& encoded) {
-    if (encoded.length() == 10) {
-        // Parse hex values - each value is 2 hex digits
-        uint8_t const brightness = strtol(encoded.substring(0, 2).c_str(), NULL, 16);
-        uint8_t const r = strtol(encoded.substring(2, 4).c_str(), NULL, 16);
-        uint8_t const g = strtol(encoded.substring(4, 6).c_str(), NULL, 16);
-        uint8_t const b = strtol(encoded.substring(6, 8).c_str(), NULL, 16);
-        uint8_t const w = strtol(encoded.substring(8, 10).c_str(), NULL, 16);
+    String data = encoded;
+    bool parsedState = state;
+    bool hasState = false;
 
-        if (hasRgbw()) {
-            setColor(r, g, b, w);
-        } else if (hasRgb()) {
-            setColor(r, g, b);
-        }
-
-        setBrightness(brightness);
+    if (encoded.length() == 12) {
+        parsedState = strtol(encoded.substring(0, 2).c_str(), NULL, 16) != 0;
+        hasState = true;
+        data = encoded.substring(2);
     }
+
+    if (data.length() != 10) return;
+
+    brightness = strtol(data.substring(0, 2).c_str(), NULL, 16);
+    uint8_t const r = strtol(data.substring(2, 4).c_str(), NULL, 16);
+    uint8_t const g = strtol(data.substring(4, 6).c_str(), NULL, 16);
+    uint8_t const b = strtol(data.substring(6, 8).c_str(), NULL, 16);
+    uint8_t const w = strtol(data.substring(8, 10).c_str(), NULL, 16);
+
+    if (hasRgbw()) {
+        color = {r, g, b, w};
+    } else if (hasRgb()) {
+        color = {r, g, b, 0};
+    }
+
+    if (hasState) state = parsedState;
+
+    dirty = true;
+    update();
 }
