@@ -58,6 +58,10 @@ bool sendTelemetry(unsigned int totalSeen, unsigned int totalFpSeen, unsigned in
         if (sendConnectivityDiscovery()
             && sendTeleSensorDiscovery("Uptime", EC_DIAGNOSTIC, "{{ value_json.uptime }}", DEVICE_CLASS_NONE, "s")
             && sendTeleSensorDiscovery("Free Mem", EC_DIAGNOSTIC, "{{ value_json.freeHeap }}", DEVICE_CLASS_NONE, "bytes")
+            && sendTeleSensorDiscovery("Min Free Mem", EC_DIAGNOSTIC, "{{ value_json.minFreeHeap }}", DEVICE_CLASS_NONE, "bytes")
+            && sendTeleSensorDiscovery("WiFi RSSI", EC_DIAGNOSTIC, "{{ value_json.rssi }}", "signal_strength", "dBm")
+            && sendTeleSensorDiscovery("WiFi Channel", EC_DIAGNOSTIC, "{{ value_json.channel }}", DEVICE_CLASS_NONE, "")
+            && sendTeleSensorDiscovery("CPU Frequency", EC_DIAGNOSTIC, "{{ value_json.cpuMhz }}", DEVICE_CLASS_NONE, "MHz")
             && (BleFingerprintCollection::countIds.isEmpty() ? sendDeleteDiscovery("sensor", "Count") : sendTeleSensorDiscovery("Count", EC_NONE, "{{ value_json.count }}"))
             && sendButtonDiscovery("Restart", EC_DIAGNOSTIC)
             && sendNumberDiscovery("Max Distance", EC_CONFIG)
@@ -109,6 +113,7 @@ bool sendTelemetry(unsigned int totalSeen, unsigned int totalFpSeen, unsigned in
     doc["firm"] = String(FIRMWARE);
 #endif
     doc["rssi"] = WiFi.RSSI();
+    doc["channel"] = WiFi.channel();
     Battery::SendTelemetry();
 
 #ifdef VERSION
@@ -137,6 +142,8 @@ bool sendTelemetry(unsigned int totalSeen, unsigned int totalFpSeen, unsigned in
     auto freeHeap = ESP.getFreeHeap();
     doc["freeHeap"] = freeHeap;
     doc["maxHeap"] = maxHeap;
+    doc["minFreeHeap"] = ESP.getMinFreeHeap();
+    doc["cpuMhz"] = ESP.getCpuFreqMHz();
     doc["fingerprints"] = fingerprintCount;
     doc["scanStack"] = uxTaskGetStackHighWaterMark(scanTaskHandle);
     doc["loopStack"] = uxTaskGetStackHighWaterMark(nullptr);

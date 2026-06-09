@@ -175,9 +175,15 @@ After flashing, wait 1–2 minutes. Reload MQTT if needed: **Settings → Device
 On the ESPresense device page:
 
 - **Chip Temperature** — on-chip die temp (thermal monitoring)
-- **Free Mem** — from telemetry
-- **Uptime** — from telemetry
+- **WiFi RSSI** — signal strength (dBm)
+- **WiFi Channel** — current WiFi channel
+- **Free Mem** — current free heap (bytes)
+- **Min Free Mem** — lowest free heap since boot (memory leak indicator)
+- **CPU Frequency** — CPU clock (MHz)
+- **Uptime** — seconds since boot
 - **Connectivity** — online/offline; telemetry JSON attached as attributes
+
+New diagnostic sensors appear after flash and MQTT discovery (reload MQTT if needed). Updates every 15s with telemetry.
 
 Chip temp is **die temperature**, not room temperature. Typical range with WiFi + BLE: 40–65°C.
 
@@ -189,7 +195,9 @@ Available on `.../telemetry` and as Connectivity entity attributes:
 | Field                                       | Use                     |
 | ------------------------------------------- | ----------------------- |
 | `rssi`                                      | WiFi signal (dBm)       |
-| `freeHeap` / `maxHeap`                      | Memory                  |
+| `channel`                                   | WiFi channel            |
+| `freeHeap` / `maxHeap` / `minFreeHeap`      | Memory (current, max alloc, low-water) |
+| `cpuMhz`                                    | CPU frequency           |
 | `scanStack` / `loopStack` / `bleStack`      | FreeRTOS stack headroom |
 | `fingerprints`                              | BLE devices in memory   |
 | `adverts` / `seen` / `queried` / `reported` | BLE pipeline            |
@@ -197,21 +205,6 @@ Available on `.../telemetry` and as Connectivity entity attributes:
 | `uptime`                                    | Seconds since boot      |
 | `firm` / `ver` / `ip`                       | Build & network info    |
 
-
-### Template sensor from telemetry (no firmware change)
-
-Example — WiFi RSSI from Connectivity attributes:
-
-```yaml
-template:
-  - sensor:
-      - name: "SuperMini WiFi RSSI"
-        state: "{{ state_attr('sensor.espresense_<room>_connectivity', 'rssi') }}"
-        unit_of_measurement: "dBm"
-        device_class: signal_strength
-```
-
-Replace `<room>` with your room slug / entity id.
 
 ### Remove stale HA entities
 
@@ -288,16 +281,11 @@ target:
 - Alert if `reconnectTries` or `teleFails` increase (via template from telemetry)
 - Alert if `fingerprints` drops to 0 unexpectedly
 
-### Useful metrics to add in firmware (future)
+### Possible future metrics
 
-
-| Metric        | API                    | Why                         |
-| ------------- | ---------------------- | --------------------------- |
-| WiFi RSSI     | `WiFi.RSSI()`          | Standalone signal entity    |
-| WiFi channel  | `WiFi.channel()`       | Interference debug          |
-| Min free heap | `ESP.getMinFreeHeap()` | Memory leak detection       |
-| CPU frequency | `ESP.getCpuFreqMHz()`  | Power/perf mode             |
-| Reset reason  | `esp_reset_reason()`   | Brownout vs watchdog vs OTA |
+| Metric       | API                  | Why                       |
+| ------------ | -------------------- | ------------------------- |
+| Reset reason | `esp_reset_reason()` | Brownout vs watchdog vs OTA |
 
 
 ---
