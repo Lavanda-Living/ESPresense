@@ -172,6 +172,15 @@
 
 #define MAX_BRIGHTNESS 20
 
+#elif defined(ESP32C3)
+
+#define DEFAULT_LED1_TYPE 2
+#define DEFAULT_LED1_PIN 8
+#define DEFAULT_LED1_CNTRL Control_Type_MQTT
+#define DEFAULT_LED1_CNT 1
+
+#define MAX_BRIGHTNESS 100
+
 #else  // DevKit / generic
 
 #define DEFAULT_LED1_TYPE 0

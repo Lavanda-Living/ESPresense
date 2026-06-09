@@ -1,5 +1,7 @@
 #include "SinglePWM.h"
 
+static constexpr uint32_t LEDC_MAX_DUTY = 4095;
+
 SinglePWM::SinglePWM(uint8_t index, ControlType controlType, bool inverted, int pin) : LED(index, controlType) {
     this->inverted = inverted;
     this->pin = pin;
@@ -7,6 +9,11 @@ SinglePWM::SinglePWM(uint8_t index, ControlType controlType, bool inverted, int 
 
 void SinglePWM::init() {
     pinMode(pin, OUTPUT);
+    if (inverted) {
+        digitalWrite(pin, HIGH);
+        inited = true;
+        return;
+    }
 #ifdef ARDUINO_V3
     inited = ledcAttach(pin, 5000, 12);
 #else
@@ -23,8 +30,13 @@ void SinglePWM::update() {
 void SinglePWM::setDuty(uint32_t x) {
     if (!inited) init();
     if (!inited) return;
-    uint32_t duty = x >= 255 ? 4096 : (x <= 0 ? 0 : round(4096.0 * pow(10.0, 0.0055 * (x - 255.0))));
-    if (inverted) duty = 4096 - duty;
+
+    if (inverted) {
+        digitalWrite(pin, x > 0 ? LOW : HIGH);
+        return;
+    }
+
+    uint32_t duty = x >= 255 ? LEDC_MAX_DUTY : (x <= 0 ? 0 : round(LEDC_MAX_DUTY * pow(10.0, 0.0055 * (x - 255.0))));
 #ifdef ARDUINO_V3
     ledcWrite(pin, duty);
 #else
