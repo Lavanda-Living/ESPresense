@@ -163,7 +163,7 @@ void Loop() {
 
 bool SendDiscovery() {
     for (auto& led : leds)
-        if (led->getControlType() == Control_Type_MQTT && !sendLightDiscovery(led->getName(), EC_NONE, led->hasRgb(), led->hasRgbw()))
+        if (led->getControlType() == Control_Type_MQTT && !sendLightDiscovery(led->getName(), EC_CONFIG, led->hasRgb(), led->hasRgbw()))
             return false;
     return true;
 }

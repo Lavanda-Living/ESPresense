@@ -255,7 +255,7 @@ ESPresense already supports HA LED control via MQTT. On `esp32c3` / `esp32c3-cdc
 
 Saved **PWM Inverted** configs on GPIO 8 are auto-migrated to **Addressable GRB** at boot (PWM corrupts the shared WS2812).
 
-**HA entity:** **Onboard LED** (`light.espresense_<room>_onboard_led`)
+**HA entity:** **Onboard LED** (`light.espresense_<room>_onboard_led`) — under **Configuration** on the device page (not Controls)
 
 **MQTT topics:**
 
