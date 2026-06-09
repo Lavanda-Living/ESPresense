@@ -1,5 +1,6 @@
 #include "LEDs.h"
 
+#include <Adafruit_NeoPixel.h>
 #include <AsyncMqttClient.h>
 #include <HeadlessWiFiSettings.h>
 #include <WS2812FX.h>
@@ -14,6 +15,30 @@
 #include "string_utils.h"
 
 namespace LEDs {
+
+#if defined(ESP32C3)
+static constexpr int C3_ONBOARD_LED_PIN = 8;
+
+static void clearGpio8NeoPixel() {
+    Adafruit_NeoPixel pixels(1, C3_ONBOARD_LED_PIN, NEO_GRB + NEO_KHZ800);
+    pixels.begin();
+    pixels.clear();
+    pixels.show();
+}
+
+static void migrateC3OnboardLed(int& type, int pin, int& cnt, ControlType cntrl) {
+    if (pin != C3_ONBOARD_LED_PIN || cntrl != Control_Type_MQTT || type != 1) return;
+    Log.println("[LEDs] GPIO8 PWM Inverted -> Addressable GRB (shared WS2812)");
+    type = 2;
+    cnt = 1;
+}
+
+static void initC3OnboardLed(int type, int pin, ControlType cntrl, const String& savedState, LED* led) {
+    if (pin < 0 || cntrl != Control_Type_MQTT || led == nullptr) return;
+    if (savedState.length() != 10) led->setState(false);
+    if (type >= 2) led->setColor(0, 0, 255);
+}
+#endif
 
 int led_1_type = DEFAULT_LED1_TYPE, led_2_type, led_3_type;
 int led_1_pin = DEFAULT_LED1_PIN, led_2_pin, led_3_pin;
@@ -58,9 +83,18 @@ void ConnectToWifi(bool updating) {
     led_3_cntrl = (ControlType)HeadlessWiFiSettings.dropdown("led_3_cntrl", ledControlTypes, 0, "LED Control");
     String const led_3_state = HeadlessWiFiSettings.string("led_3_state", true, "LED State");
 
+#if defined(ESP32C3)
+    migrateC3OnboardLed(led_1_type, led_1_pin, led_1_cnt, led_1_cntrl);
+#endif
+
     leds.push_back(newLed(1, led_1_cntrl, led_1_type, led_1_pin, led_1_cnt, led_1_state));
     leds.push_back(newLed(2, led_2_cntrl, led_2_type, led_2_pin, led_2_cnt, led_2_state));
     leds.push_back(newLed(3, led_3_cntrl, led_3_type, led_3_pin, led_3_cnt, led_3_state));
+
+#if defined(ESP32C3)
+    initC3OnboardLed(led_1_type, led_1_pin, led_1_cntrl, led_1_state, leds.empty() ? nullptr : leds[0]);
+#endif
+
     std::copy_if(leds.begin(), leds.end(), std::back_inserter(statusLeds), [](LED* a) { return a->getControlType() == Control_Type_Status; });
     std::copy_if(leds.begin(), leds.end(), std::back_inserter(countLeds), [](LED* a) { return a->getControlType() == Control_Type_Count; });
     std::copy_if(leds.begin(), leds.end(), std::back_inserter(motionLeds), [](LED* a) { return a->getControlType() == Control_Type_Motion; });
@@ -95,6 +129,9 @@ bool sendState(LED* bulb) {
 }
 
 void Setup() {
+#if defined(ESP32C3)
+    if (led_1_pin == C3_ONBOARD_LED_PIN) clearGpio8NeoPixel();
+#endif
     for (auto& led : leds)
         led->update();
 }
@@ -184,7 +221,7 @@ void Update(unsigned int percent) {
 
 LED* findBulb(String& command) {
     for (auto& led : leds) {
-        if (led->getId() == command) {
+        if (led->getId() == command || slugify(led->getName()) == command) {
             return led;
         }
     }

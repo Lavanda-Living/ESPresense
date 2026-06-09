@@ -46,10 +46,10 @@ python -m platformio run -e esp32c6-cdc  # C6 with USB CDC
 
 ### Flash ESP32-C3
 
-Replace `COM3` with your port (Device Manager → Ports):
+Replace `COM6` with your port if different (Device Manager → Ports). See [SERIAL_MONITOR.md](SERIAL_MONITOR.md) for log monitoring.
 
 ```powershell
-python -m platformio run -e esp32c3 -t upload --upload-port COM3
+python -m platformio run -e esp32c3 -t upload --upload-port COM6
 ```
 
 Output firmware: `.pio\build\esp32c3\firmware.bin`
@@ -82,9 +82,9 @@ Output firmware: `.pio\build\esp32c6\firmware.bin` (or `esp32c6-cdc`).
 **Flash:**
 
 ```powershell
-python -m platformio run -e esp32c6 -t upload --upload-port COM3
+python -m platformio run -e esp32c6 -t upload --upload-port COM6
 # or:
-python -m platformio run -e esp32c6-cdc -t upload --upload-port COM3
+python -m platformio run -e esp32c6-cdc -t upload --upload-port COM6
 ```
 
 **Find the COM port (PowerShell):**
@@ -102,10 +102,10 @@ Many C6 boards (especially SuperMini) need BOOT held during connect:
 3. Release **BOOT**
 4. Run the upload command immediately
 
-**Monitor serial after flash:**
+**Monitor serial after flash:** see [SERIAL_MONITOR.md](SERIAL_MONITOR.md).
 
 ```powershell
-python -m platformio device monitor -e esp32c6-cdc --port COM3
+python -m platformio device monitor -e esp32c6-cdc --port COM6
 ```
 
 **C6 vs C3 differences:**
@@ -122,10 +122,8 @@ python -m platformio device monitor -e esp32c6-cdc --port COM3
 
 ### Flash to device (generic)
 
-Replace `COM3` with your port (Device Manager → Ports):
-
 ```powershell
-python -m platformio run -e <env> -t upload --upload-port COM3
+python -m platformio run -e <env> -t upload --upload-port COM6
 ```
 
 Examples: `esp32c3`, `esp32c3-cdc`, `esp32c6`, `esp32c6-cdc`
@@ -133,7 +131,7 @@ Examples: `esp32c3`, `esp32c3-cdc`, `esp32c6`, `esp32c6-cdc`
 Build + upload in one step:
 
 ```powershell
-python -m platformio run -e esp32c6-cdc -t upload --upload-port COM3
+python -m platformio run -e esp32c6-cdc -t upload --upload-port COM6
 ```
 
 ### UI build (after changing files under `ui/`)
@@ -223,6 +221,51 @@ If an old entity shows **Unavailable** (e.g. `SuperMini Internal Temperature`):
 2. Or publish empty payload to its MQTT discovery config topic under `homeassistant/sensor/...`
 3. Or remove manual `mqtt:` sensor entries from `configuration.yaml`
 
+### Onboard LED control (ESP32-C3 SuperMini)
+
+ESPresense already supports HA LED control via MQTT. On `esp32c3` / `esp32c3-cdc` builds, LED 1 defaults to the SuperMini Plus onboard WS2812 RGB on GPIO 8:
+
+| Setting | Default (C3 firmware) |
+|---------|----------------------|
+| Pin | GPIO 8 |
+| Type | Addressable GRB |
+| Count | 1 |
+| Control | MQTT (HA on/off; no status blinking) |
+
+Saved **PWM Inverted** configs on GPIO 8 are auto-migrated to **Addressable GRB** at boot (PWM corrupts the shared WS2812).
+
+**HA entity:** **Onboard LED** (`light.espresense_<room>_onboard_led`)
+
+**MQTT topics:**
+
+| Topic | Purpose |
+|-------|---------|
+| `espresense/rooms/<room>/onboard_led` | State (JSON, retained) |
+| `espresense/rooms/<room>/onboard_led/set` | Command — `{"state":"ON"}` or `{"state":"OFF"}` |
+| `espresense/rooms/<room>/led_1/set` | Command alias (internal id) |
+| `homeassistant/light/espresense_<id>/onboard_led/config` | HA discovery |
+
+Toggle the light in HA to turn the RGB LED on/off (default color blue). Brightness and color are supported via the light entity.
+
+**SuperMini Plus (red PCB):** red power LED (always on), blue LED and WS2812 RGB both on GPIO 8. Firmware drives the WS2812 via **Addressable GRB**; HA **Onboard LED** controls the shared RGB output (default color blue). Do not use PWM on GPIO 8 — it corrupts the WS2812.
+
+**Already-flashed nodes:** old SPIFFS settings may need updating under **Hardware → LED 1**:
+
+- Pin: `8`
+- LED Type: `Addressable GRB`
+- Count: `1`
+- LED Control: `MQTT`
+
+Then reboot. New defaults apply automatically on fresh flash or before hardware settings are first saved.
+
+**Automation example:**
+
+```yaml
+action: light.turn_on
+target:
+  entity_id: light.espresense_<room>_onboard_led
+```
+
 ---
 
 ## Diagnostics reference
@@ -272,5 +315,7 @@ If an old entity shows **Unavailable** (e.g. `SuperMini Internal Temperature`):
 | C6 build fails at `bootloader.bin` / esptool `TypeError` | Python 3.14 + old esptool conflict — use PlatformIO IDE extension, or Python 3.11/3.12 for CLI builds |
 | C6 upload not detected                                   | Hold BOOT → tap RESET → release BOOT, then upload immediately                                         |
 | Wrong C6 env                                             | UART board → `esp32c6`; native USB CDC → `esp32c6-cdc`                                                |
+| Onboard LED not in HA / wrong pin                        | Hardware → LED 1: pin 8, PWM Inverted, MQTT; reload MQTT; reboot ESP                                  |
+| LED blinks on WiFi/BLE instead of HA control             | Change LED Control from Status to MQTT in hardware settings                                           |
 
 

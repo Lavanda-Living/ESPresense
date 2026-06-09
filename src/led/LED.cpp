@@ -147,6 +147,9 @@ bool LED::setState(bool p_state) {
 }
 
 const String LED::getName() {
+#if defined(ESP32C3)
+    if (index == 1) return "Onboard LED";
+#endif
     return Sprintf("LED %d", index);
 }
 
