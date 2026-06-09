@@ -33,14 +33,16 @@ python -m platformio run -e esp32c6-cdc  # C6 with USB CDC
 
 ### Which environment?
 
-| Board | Environment |
-|-------|-------------|
-| ESP32-C3 / SuperMini (UART USB adapter) | `esp32c3` |
-| ESP32-C3 USB CDC on boot (single USB cable) | `esp32c3-cdc` |
-| ESP32-C6 / C6 SuperMini (UART USB adapter) | `esp32c6` |
-| ESP32-C6 USB CDC on boot (single USB cable) | `esp32c6-cdc` |
-| Classic ESP32 | `esp32` |
-| ESP32-S3 | `esp32s3` or `esp32s3-cdc` |
+
+| Board                                       | Environment                |
+| ------------------------------------------- | -------------------------- |
+| ESP32-C3 / SuperMini (UART USB adapter)     | `esp32c3`                  |
+| ESP32-C3 USB CDC on boot (single USB cable) | `esp32c3-cdc`              |
+| ESP32-C6 / C6 SuperMini (UART USB adapter)  | `esp32c6`                  |
+| ESP32-C6 USB CDC on boot (single USB cable) | `esp32c6-cdc`              |
+| Classic ESP32                               | `esp32`                    |
+| ESP32-S3                                    | `esp32s3` or `esp32s3-cdc` |
+
 
 ### Flash ESP32-C3
 
@@ -60,10 +62,12 @@ The **ChipTemp** change is compatible with ESP32-C6. The C6 has the same on-chip
 
 **Pick the environment:**
 
-| Your board | Environment | When to use |
-|------------|-------------|-------------|
-| C6 DevKitC, UART/CH340 USB | `esp32c6` | Separate serial chip, or external USB-UART |
+
+| Your board                    | Environment   | When to use                                       |
+| ----------------------------- | ------------- | ------------------------------------------------- |
+| C6 DevKitC, UART/CH340 USB    | `esp32c6`     | Separate serial chip, or external USB-UART        |
 | C6 SuperMini / native USB CDC | `esp32c6-cdc` | Single USB cable, shows as USB JTAG/serial device |
+
 
 **Build:**
 
@@ -106,13 +110,15 @@ python -m platformio device monitor -e esp32c6-cdc --port COM3
 
 **C6 vs C3 differences:**
 
-| | ESP32-C3 | ESP32-C6 |
-|---|----------|----------|
-| PlatformIO env | `esp32c3` | `esp32c6` |
-| Arduino-ESP32 | 2.x (Tasmota platform) | 3.2.1 (pioarduino platform) |
-| NimBLE | v1 | v2 (`NIMBLE_V2`) |
-| Chip temp | Supported | Supported |
-| HA entity | Chip Temperature | Chip Temperature (same) |
+
+|                | ESP32-C3               | ESP32-C6                    |
+| -------------- | ---------------------- | --------------------------- |
+| PlatformIO env | `esp32c3`              | `esp32c6`                   |
+| Arduino-ESP32  | 2.x (Tasmota platform) | 3.2.1 (pioarduino platform) |
+| NimBLE         | v1                     | v2 (`NIMBLE_V2`)            |
+| Chip temp      | Supported              | Supported                   |
+| HA entity      | Chip Temperature       | Chip Temperature (same)     |
+
 
 ### Flash to device (generic)
 
@@ -141,112 +147,28 @@ Regenerates C++ headers under `src/`.
 
 ---
 
-## Git & fork workflow
-
-### Remotes
-
-| Remote | URL | Purpose |
-|--------|-----|---------|
-| `origin` | `git@github.com:Lavanda-Living/ESPresense.git` | Your fork — push here |
-| `upstream` | `https://github.com/ESPresense/ESPresense` | Official repo — pull updates |
-
-```powershell
-git remote -v
-```
-
-Add or fix remotes:
-
-```powershell
-git remote rename origin upstream          # if origin still points at upstream
-git remote add origin git@github.com:Lavanda-Living/ESPresense.git
-git remote set-url origin git@github.com:Lavanda-Living/ESPresense.git
-```
-
-HTTPS alternative:
-
-```powershell
-git remote add origin https://github.com/Lavanda-Living/ESPresense.git
-```
-
-### Daily workflow
-
-Push current branch to your fork:
-
-```powershell
-git push
-```
-
-First push on a new branch:
-
-```powershell
-git push -u origin feat/my-branch-name
-```
-
-Start a new feature branch:
-
-```powershell
-git checkout main
-git pull
-git checkout -b feat/my-feature
-```
-
-### Sync fork with upstream
-
-```powershell
-git fetch upstream
-git checkout main
-git merge upstream/main
-git push origin main
-```
-
-### Branch & commit naming (convention)
-
-Branch examples:
-
-```text
-feat/chip-temperature-mqtt
-feat/on-chip-temp-sensor
-```
-
-Commit message example:
-
-```text
-feat: publish on-chip temperature to MQTT for thermal monitoring
-
-Add a ChipTemp module that reads the ESP32 internal temperature sensor
-and exposes it via MQTT discovery as a diagnostic entity in Home Assistant.
-```
-
-### Open a PR to upstream
-
-After pushing to your fork:
-
-```powershell
-gh pr create --repo ESPresense/ESPresense --head Lavanda-Living:feat/on-chip-temp-sensor --base dev
-```
-
-Or use the **Compare & pull request** button on GitHub. Confirm the base branch (`dev` vs `main`) on the upstream repo before opening.
-
----
-
 ## MQTT & Home Assistant
 
 ### Key MQTT topics
 
-| Topic | Content |
-|-------|---------|
-| `espresense/rooms/<room>/status` | `online` / offline |
-| `espresense/rooms/<room>/telemetry` | JSON diagnostics (every 15s) |
-| `espresense/rooms/<room>/chip_temperature` | On-chip temperature (°C, every 60s) |
-| `homeassistant/sensor/espresense_<id>/chip_temperature/config` | HA discovery for chip temp |
+
+| Topic                                                          | Content                             |
+| -------------------------------------------------------------- | ----------------------------------- |
+| `espresense/rooms/<room>/status`                               | `online` / offline                  |
+| `espresense/rooms/<room>/telemetry`                            | JSON diagnostics (every 15s)        |
+| `espresense/rooms/<room>/chip_temperature`                     | On-chip temperature (°C, every 60s) |
+| `homeassistant/sensor/espresense_<id>/chip_temperature/config` | HA discovery for chip temp          |
+
 
 ### ESPresense web UI settings
 
-| Setting | Default | Notes |
-|---------|---------|-------|
-| Send to discovery topic | On | Required for HA auto-discovery |
-| Send to telemetry topic | On | Publishes JSON diagnostics |
-| Publish on-chip temperature | On | Chip Temperature entity |
+
+| Setting                     | Default | Notes                          |
+| --------------------------- | ------- | ------------------------------ |
+| Send to discovery topic     | On      | Required for HA auto-discovery |
+| Send to telemetry topic     | On      | Publishes JSON diagnostics     |
+| Publish on-chip temperature | On      | Chip Temperature entity        |
+
 
 After flashing, wait 1–2 minutes. Reload MQTT if needed: **Settings → Devices & services → MQTT → Reload**.
 
@@ -265,16 +187,18 @@ Chip temp is **die temperature**, not room temperature. Typical range with WiFi 
 
 Available on `.../telemetry` and as Connectivity entity attributes:
 
-| Field | Use |
-|-------|-----|
-| `rssi` | WiFi signal (dBm) |
-| `freeHeap` / `maxHeap` | Memory |
-| `scanStack` / `loopStack` / `bleStack` | FreeRTOS stack headroom |
-| `fingerprints` | BLE devices in memory |
-| `adverts` / `seen` / `queried` / `reported` | BLE pipeline |
-| `failed` / `teleFails` / `reconnectTries` | Errors / reconnects |
-| `uptime` | Seconds since boot |
-| `firm` / `ver` / `ip` | Build & network info |
+
+| Field                                       | Use                     |
+| ------------------------------------------- | ----------------------- |
+| `rssi`                                      | WiFi signal (dBm)       |
+| `freeHeap` / `maxHeap`                      | Memory                  |
+| `scanStack` / `loopStack` / `bleStack`      | FreeRTOS stack headroom |
+| `fingerprints`                              | BLE devices in memory   |
+| `adverts` / `seen` / `queried` / `reported` | BLE pipeline            |
+| `failed` / `teleFails` / `reconnectTries`   | Errors / reconnects     |
+| `uptime`                                    | Seconds since boot      |
+| `firm` / `ver` / `ip`                       | Build & network info    |
+
 
 ### Template sensor from telemetry (no firmware change)
 
@@ -305,12 +229,14 @@ If an old entity shows **Unavailable** (e.g. `SuperMini Internal Temperature`):
 
 ### Chip temperature thresholds (ESP32-C3 / C6, WiFi + BLE active)
 
-| Range | Meaning |
-|-------|---------|
-| 40–65°C | Normal |
-| 65–75°C | Warm — check airflow / enclosure |
+
+| Range           | Meaning                               |
+| --------------- | ------------------------------------- |
+| 40–65°C         | Normal                                |
+| 65–75°C         | Warm — check airflow / enclosure      |
 | >75°C sustained | Investigate placement or heat buildup |
-| 105°C | Max operating temp (C3/C6 datasheet) |
+| 105°C           | Max operating temp (C3/C6 datasheet)  |
+
 
 ### HA automation ideas
 
@@ -321,25 +247,30 @@ If an old entity shows **Unavailable** (e.g. `SuperMini Internal Temperature`):
 
 ### Useful metrics to add in firmware (future)
 
-| Metric | API | Why |
-|--------|-----|-----|
-| WiFi RSSI | `WiFi.RSSI()` | Standalone signal entity |
-| WiFi channel | `WiFi.channel()` | Interference debug |
-| Min free heap | `ESP.getMinFreeHeap()` | Memory leak detection |
-| CPU frequency | `ESP.getCpuFreqMHz()` | Power/perf mode |
-| Reset reason | `esp_reset_reason()` | Brownout vs watchdog vs OTA |
+
+| Metric        | API                    | Why                         |
+| ------------- | ---------------------- | --------------------------- |
+| WiFi RSSI     | `WiFi.RSSI()`          | Standalone signal entity    |
+| WiFi channel  | `WiFi.channel()`       | Interference debug          |
+| Min free heap | `ESP.getMinFreeHeap()` | Memory leak detection       |
+| CPU frequency | `ESP.getCpuFreqMHz()`  | Power/perf mode             |
+| Reset reason  | `esp_reset_reason()`   | Brownout vs watchdog vs OTA |
+
 
 ---
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
-| `pio` not recognized | Use `python -m platformio` or add Python Scripts to PATH |
-| HA entity missing after flash | Check discovery + chip temp enabled; reload MQTT; reboot ESP |
-| Duplicate temp entities | Delete stale manual/discovery entity; keep **Chip Temperature** |
-| Build fails after UI change | Run `npm run build` in `ui/` |
-| Push rejected | `git pull --rebase origin main` then push again |
+
+| Problem                                                  | Fix                                                                                                   |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `pio` not recognized                                     | Use `python -m platformio` or add Python Scripts to PATH                                              |
+| HA entity missing after flash                            | Check discovery + chip temp enabled; reload MQTT; reboot ESP                                          |
+| Duplicate temp entities                                  | Delete stale manual/discovery entity; keep **Chip Temperature**                                       |
+| Build fails after UI change                              | Run `npm run build` in `ui/`                                                                          |
+| Push rejected                                            | `git pull --rebase origin main` then push again                                                       |
 | C6 build fails at `bootloader.bin` / esptool `TypeError` | Python 3.14 + old esptool conflict — use PlatformIO IDE extension, or Python 3.11/3.12 for CLI builds |
-| C6 upload not detected | Hold BOOT → tap RESET → release BOOT, then upload immediately |
-| Wrong C6 env | UART board → `esp32c6`; native USB CDC → `esp32c6-cdc` |
+| C6 upload not detected                                   | Hold BOOT → tap RESET → release BOOT, then upload immediately                                         |
+| Wrong C6 env                                             | UART board → `esp32c6`; native USB CDC → `esp32c6-cdc`                                                |
+
+
