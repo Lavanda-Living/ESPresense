@@ -18,6 +18,17 @@ On Windows you can also check **Device Manager → Ports (COM & LPT)**.
 
 If `COM6` is not listed, use whatever port appears for your board (e.g. `USB Serial Device` or `USB JTAG/serial` on C3/C6 CDC boards).
 
+### `esp32c3` vs `esp32c3-cdc`
+
+Use the **same environment** for build, flash, and monitor. SuperMini boards need **`esp32c3-cdc`** (native USB on the USB-C port). Use **`esp32c3`** only with a CH340/UART adapter.
+
+| Environment | Monitor command |
+| ----------- | --------------- |
+| SuperMini (typical) | `device monitor -e esp32c3-cdc --port COM6` |
+| CH340 / UART only | `device monitor -e esp32c3 --port COM6` |
+
+See [CHEATSHEET.md](CHEATSHEET.md) for the full comparison.
+
 ---
 
 ## Open the serial monitor
@@ -99,5 +110,7 @@ PlatformIO applies `esp32_exception_decoder` and `time` filters from `platformio
 | Wrong garbled text | Set baud to **115200** |
 | COM6 not listed | Try another USB cable (data-capable); reinstall USB drivers; run `device list` again |
 | Monitor works, upload fails | Hold **BOOT** → tap **RESET** → release **BOOT**, then upload immediately |
+| No serial output on SuperMini | Wrong env — use **`esp32c3-cdc`**, not `esp32c3` |
+| ESPresense works but no USB logs | Flashed `esp32c3` on a CDC board; reflash with **`esp32c3-cdc`** |
 
 Only one application can use COM6 at a time — stop the monitor before flashing.

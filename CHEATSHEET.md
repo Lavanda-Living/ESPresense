@@ -26,33 +26,61 @@ python -m pip install -U platformio
 
 ```powershell
 cd C:\Users\wsergio\dev\thetacodeops\experimental\ESPresense
-python -m platformio run -e esp32c3      # C3
-python -m platformio run -e esp32c6      # C6
-python -m platformio run -e esp32c6-cdc  # C6 with USB CDC
+python -m platformio run -e esp32c3-cdc   # C3 SuperMini (default for this fork)
+python -m platformio run -e esp32c3        # C3 with UART/CH340 USB only
+python -m platformio run -e esp32c6-cdc    # C6 with USB CDC
+python -m platformio run -e esp32c6        # C6 with UART/CH340 USB only
 ```
 
 ### Which environment?
 
+| Board | Environment | When to use |
+| ----- | ----------- | ----------- |
+| **ESP32-C3 SuperMini / Plus** (single USB-C cable) | `esp32c3-cdc` | **Use this** — native USB serial on COM port |
+| ESP32-C3 with CH340 / CP2102 USB-UART | `esp32c3` | Separate serial chip, not native USB CDC |
+| **ESP32-C6 SuperMini** (single USB-C cable) | `esp32c6-cdc` | Native USB serial |
+| ESP32-C6 with CH340 / external UART | `esp32c6` | Separate serial chip |
+| Classic ESP32 | `esp32` | |
+| ESP32-S3 | `esp32s3` or `esp32s3-cdc` | Same UART vs CDC distinction |
 
-| Board                                       | Environment                |
-| ------------------------------------------- | -------------------------- |
-| ESP32-C3 / SuperMini (UART USB adapter)     | `esp32c3`                  |
-| ESP32-C3 USB CDC on boot (single USB cable) | `esp32c3-cdc`              |
-| ESP32-C6 / C6 SuperMini (UART USB adapter)  | `esp32c6`                  |
-| ESP32-C6 USB CDC on boot (single USB cable) | `esp32c6-cdc`              |
-| Classic ESP32                               | `esp32`                    |
-| ESP32-S3                                    | `esp32s3` or `esp32s3-cdc` |
+### `esp32c3` vs `esp32c3-cdc` — same firmware, different USB
 
+Both environments build the **same ESPresense application** (WiFi, BLE, MQTT, HA features). The only compile-time difference is how **USB serial** is wired at boot:
+
+| | `esp32c3` | `esp32c3-cdc` |
+| --- | --- | --- |
+| USB | UART via CH340/CP2102 (or external adapter) | **Native USB CDC** on the USB-C port |
+| Flash / monitor over SuperMini USB-C | Often broken or silent | Works |
+| Telemetry `firm` field | `esp32c3` | `esp32c3-cdc` |
+| Pick for SuperMini | Wrong choice | **Correct choice** |
+
+**Will both run ESPresense?** Yes — presence, MQTT, and Home Assistant behave the same once flashed.
+
+**Will both flash and log over USB on a SuperMini?** No. SuperMini boards use native USB CDC; use **`esp32c3-cdc`** so upload and `device monitor` work on `COM6`.
+
+If `esp32c3-cdc` already builds, flashes, and shows serial logs, use it for **all** your C3 SuperMinis. Only use `esp32c3` if you know your board has a separate UART chip.
 
 ### Flash ESP32-C3
 
 Replace `COM6` with your port if different (Device Manager → Ports). See [SERIAL_MONITOR.md](SERIAL_MONITOR.md) for log monitoring.
+
+**SuperMini / SuperMini Plus (recommended):**
+
+```powershell
+python -m platformio run -e esp32c3-cdc -t upload --upload-port COM6
+```
+
+Output firmware: `.pio\build\esp32c3-cdc\firmware.bin`
+
+**CH340 / UART adapter only:**
 
 ```powershell
 python -m platformio run -e esp32c3 -t upload --upload-port COM6
 ```
 
 Output firmware: `.pio\build\esp32c3\firmware.bin`
+
+**If upload fails:** hold **BOOT** → tap **RESET** → release **BOOT** → run upload immediately.
 
 ### Flash ESP32-C6
 
@@ -126,12 +154,12 @@ python -m platformio device monitor -e esp32c6-cdc --port COM6
 python -m platformio run -e <env> -t upload --upload-port COM6
 ```
 
-Examples: `esp32c3`, `esp32c3-cdc`, `esp32c6`, `esp32c6-cdc`
+Examples: `esp32c3-cdc` (C3 SuperMini), `esp32c3`, `esp32c6-cdc`, `esp32c6`
 
-Build + upload in one step:
+Build + upload in one step (C3 SuperMini):
 
 ```powershell
-python -m platformio run -e esp32c6-cdc -t upload --upload-port COM6
+python -m platformio run -e esp32c3-cdc -t upload --upload-port COM6
 ```
 
 ### UI build (after changing files under `ui/`)
